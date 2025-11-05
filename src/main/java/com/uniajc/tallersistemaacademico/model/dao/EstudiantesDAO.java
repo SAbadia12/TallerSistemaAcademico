@@ -1,9 +1,11 @@
 package com.uniajc.tallersistemaacademico.model.dao;
 
 import com.uniajc.tallersistemaacademico.model.ConexionBD;
+import com.uniajc.tallersistemaacademico.model.Docentes;
 import com.uniajc.tallersistemaacademico.model.Estudiantes;
 import com.uniajc.tallersistemaacademico.model.PeriodosAcademicos;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,12 +15,12 @@ import java.util.List;
 public class EstudiantesDAO {
 
     // Metodo insertar
-    public void insertarEstudiante(Estudiantes estudiante){
+    public String insertarEstudiante(Estudiantes estudiante){
 
-        String sql = "INSERT INTO estudiantes (indetificacion, nombre, correo_insitucional, correo_personal, telefono, es_vocero, comentarios, tipo_documento, genero) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "{CALL sp_crear_estudiante(?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 
         try (Connection conn = ConexionBD.getConexion();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             CallableStatement stmt = conn.prepareCall(sql)) {
 
             stmt.setInt(1, estudiante.getIdentificacion());
             stmt.setString(2, estudiante.getNombre());
@@ -26,16 +28,23 @@ public class EstudiantesDAO {
             stmt.setString(4, estudiante.getCorreo_personal());
             stmt.setInt(5, estudiante.getTelefono());
             stmt.setInt(6, estudiante.getEs_vocero());
-            stmt.setString(7, estudiante.getComentarios());
-            stmt.setString(8, estudiante.getTipo_documento());
-            stmt.setString(9, estudiante.getGenero());
+            stmt.setString(7, estudiante.getTipo_documento());
+            stmt.setString(8, estudiante.getGenero());
+            stmt.setString(9, estudiante.getComentarios());
 
-            stmt.executeUpdate();
-            System.out.println("Estudiante insertado con éxito");
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("resultado"); // Captura el mensaje del SP
+                }
+            }
+
+            //System.out.println("Docente insertado con éxito");
         }catch (Exception e){
-            System.out.println("Error al insertar el estudiante:");
+            //System.out.println("Error al insertar el Docente:");
             e.printStackTrace();
+            return "Error: Fallo en la ejecución";
         }
+        return "Error: No se recibió respuesta del procedimiento almacenado";
     }
 
     // Metodo listar
@@ -43,83 +52,86 @@ public class EstudiantesDAO {
 
         List<Estudiantes> lista = new ArrayList<>();
 
-        String sql = "SELECT * FROM estudiantes";
+        String sql = "{CALL sp_listar_estudiantes()}";
 
         try (Connection conn = ConexionBD.getConexion();
-             PreparedStatement stmt = conn.prepareStatement(sql);
+             CallableStatement stmt = conn.prepareCall(sql);
              ResultSet rs = stmt.executeQuery()) {
 
-            while (rs.next()){
-                int id = rs.getInt("estudiante_id");
-                int identificacion = rs.getInt("identificacion");
-                String nombre = rs.getString("nombre");
-                String correoInstitucional = rs.getString("correo_institucional");
-                String correoPersonal = rs.getString("correo_personal");
-                int telefono = rs.getInt("telefono");
-                int esVocero = rs.getInt("es_vocero");
-                String comentarios = rs.getString("comentarios");
-                String tipoDocumento = rs.getString("tipo_documento");
-                String genero = rs.getString("genero");
-
-                Estudiantes estudiante = new Estudiantes(id, identificacion, nombre, correoInstitucional, correoPersonal, telefono, esVocero, comentarios, tipoDocumento, genero);
+            while (rs.next()) {
+                Estudiantes estudiante = new Estudiantes(
+                        rs.getInt("estudiante_id"),
+                        rs.getInt("identificacion"),
+                        rs.getString("nombre"),
+                        rs.getString("correo_institucional"),
+                        rs.getString("correo_personal"),
+                        rs.getInt("telefono"),
+                        rs.getInt("es_vocero"),
+                        rs.getString("tipo_documento"),
+                        rs.getString("genero"),
+                        rs.getString("comentarios")
+                );
                 lista.add(estudiante);
             }
         }catch (Exception e){
-            System.out.println("Error al listar los estudiantes:");
+            //System.out.println("Error al listar los estudiantes:");
             e.printStackTrace();
         }
         return lista;
     }
 
     // Metodo actualizar
-    public void actualizarEstudiante(Estudiantes estudiante){
-        String sql = "UPDATE estudiantes SET identifiacion = ?, nombre = ?, correo_institucional = ?, correo_personal = ?, telefono = ?, es_vocero = ?, comentarios = ?, tipo_documento = ?, genero = ? WHERE estudiante_id = ?";
+    public String actualizarEstudiante(Estudiantes estudiante){
+        String sql = "{CALL sp_actualizar_estudiante(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 
         try (Connection conn = ConexionBD.getConexion();
-             PreparedStatement stmt = conn.prepareStatement(sql)){
+             CallableStatement stmt = conn.prepareCall(sql)){
 
-            stmt.setInt(1, estudiante.getIdentificacion());
-            stmt.setString(2, estudiante.getNombre());
-            stmt.setString(3, estudiante.getCorreo_institucional());
-            stmt.setString(4, estudiante.getCorreo_personal());
-            stmt.setInt(5, estudiante.getTelefono());
-            stmt.setInt(6, estudiante.getEs_vocero());
-            stmt.setString(7, estudiante.getComentarios());
+            stmt.setInt(1, estudiante.getEstudiante_id());
+            stmt.setInt(2, estudiante.getIdentificacion());
+            stmt.setString(3, estudiante.getNombre());
+            stmt.setString(4, estudiante.getCorreo_institucional());
+            stmt.setString(5, estudiante.getCorreo_personal());
+            stmt.setInt(6, estudiante.getTelefono());
+            stmt.setInt(7, estudiante.getEs_vocero());
             stmt.setString(8, estudiante.getTipo_documento());
             stmt.setString(9, estudiante.getGenero());
-            stmt.setInt(10, estudiante.getEstudiante_id());
+            stmt.setString(10, estudiante.getComentarios());
 
-            int filas = stmt.executeUpdate();
-            if (filas > 0){
-                System.out.println("Estudiante actualizado con éxito");
-            }else{
-                System.out.println("No se encontró el estudiante con el id: " + estudiante.getEstudiante_id());
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("resultado"); // Captura el mensaje del SP
+                }
             }
+
         }catch (Exception e){
-            System.out.println("Error al actualizar el estudiante:");
+            //System.out.println("Error al actualizar el docente:");
             e.printStackTrace();
+            return "Error: Fallo en la ejecución.";
         }
+
+        return "Error: No se recibió respuesta del procedimiento";
     }
 
     // Metodo Eliminar
-    public void eliminarEstudiante(int id){
-        String sql = "DELETE FROM estudiantes WHERE estudiante_id = ?";
+    public String eliminarEstudiante(int id){
+        String sql = "{CALL sp_eliminar_estudiante(?)}";
 
         try (Connection conn = ConexionBD.getConexion();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             CallableStatement stmt = conn.prepareCall(sql)) {
 
             stmt.setInt(1, id);
-            int filas = stmt.executeUpdate();
-
-            if (filas > 0){
-                System.out.println("Estudainte eliminado correctamente");
-            }else{
-                System.out.println("No se encontró el estudiante con ID: " + id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("resultado"); // Captura el mensaje del SP
+                }
             }
 
-        }catch (Exception e){
-            System.out.println("Error al eliminar el estudiante:");
+        } catch (Exception e) {
             e.printStackTrace();
+            return "Error: Fallo en la ejecución.";
         }
+
+        return "Error: No se recibió respuesta del procedimiento.";
     }
 }
