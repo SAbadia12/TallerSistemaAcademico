@@ -2,22 +2,18 @@ package com.uniajc.tallersistemaacademico.model;
 
 import java.time.LocalDate;
 
+;
 public class Asistencias {
 
     private int asistencia_id;
     private int estudiante_id;
     private int curso_id;
     private LocalDate fecha_clase;
-    private enum estado_asistencia{
-        presente,
-        ausente,
-        tardanza
-    };
-    private estado_asistencia estado_asistencia;
+    private EstadoAsistencia estado_asistencia;
 
     private String novedades;
 
-    public Asistencias(int estudiante_id, int curso_id, LocalDate fecha_clase, estado_asistencia estado_asistencia, String novedades) {
+    public Asistencias(int estudiante_id, int curso_id, LocalDate fecha_clase, EstadoAsistencia estado_asistencia, String novedades) {
         this.estudiante_id = estudiante_id;
         this.curso_id = curso_id;
         this.fecha_clase = fecha_clase;
@@ -25,7 +21,7 @@ public class Asistencias {
         this.novedades = novedades;
     }
 
-    public Asistencias(int asistencia_id, int estudiante_id, int curso_id, LocalDate fecha_clase, estado_asistencia estado_asistencia, String novedades) {
+    public Asistencias(int asistencia_id, int estudiante_id, int curso_id, LocalDate fecha_clase, EstadoAsistencia estado_asistencia, String novedades) {
         this.asistencia_id = asistencia_id;
         this.estudiante_id = estudiante_id;
         this.curso_id = curso_id;
@@ -66,11 +62,11 @@ public class Asistencias {
         this.fecha_clase = fecha_clase;
     }
 
-    public estado_asistencia getEstado_asistencia() {
+    public EstadoAsistencia getEstado_asistencia() {
         return estado_asistencia;
     }
 
-    public void setEstado_asistencia(estado_asistencia estado_asistencia) {
+    public void setEstado_asistencia(EstadoAsistencia estado_asistencia) {
         this.estado_asistencia = estado_asistencia;
     }
 
